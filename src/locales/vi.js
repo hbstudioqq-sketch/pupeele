@@ -182,8 +182,6 @@ export default {
 
   'foot.tagline': 'Xưởng phụ kiện búp bê nguyên bản · bán buôn toàn cầu',
   'foot.defaultLang': 'Ngôn ngữ mặc định',
-  'foot.autoDetect': 'Luôn theo ngôn ngữ trình duyệt',
-  'foot.reset': 'Đặt lại theo ngôn ngữ trình duyệt',
   'foot.rights': 'Bảo lưu mọi quyền.',
   'foot.ip': 'Sở hữu trí tuệ',
   'foot.ipText': 'Mọi thiết kế trình bày tại đây đều là bản gốc hoặc linh kiện chung, không mang nhân vật. Chúng tôi không nhận đơn đặt hàng riêng mang hình ảnh, tên nhân vật hoặc nhãn hiệu đã đăng ký của bên thứ ba.',
@@ -192,7 +190,6 @@ export default {
 
   'toast.langSaved': 'Đã lưu ngôn ngữ mặc định',
   'toast.added': 'Đã thêm vào danh sách hỏi giá',
-  'toast.reset': 'Đã đặt lại theo ngôn ngữ trình duyệt',
 
   'studio.step.head': 'Chọn đầu',
   'studio.slot.head': 'Đầu',

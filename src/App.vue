@@ -100,14 +100,6 @@ function setDefault (code) {
   lang.setLang(code)
   message.success(t('toast.langSaved'))
 }
-function toggleAuto (on) {
-  lang.setAuto(on)
-  message.success(t('toast.langSaved'))
-}
-function reset () {
-  lang.resetToBrowser()
-  message.success(t('toast.reset'))
-}
 
 watch(() => lang.lang, v => { locale.value = v })
 
@@ -192,39 +184,35 @@ const year = new Date().getFullYear()
 
     <footer class="footer">
       <div class="wrap">
-        <div class="footer-grid">
-          <div>
-            <div class="brand" style="margin-bottom: 10px">{{ CONFIG.brand }}</div>
-            <p style="margin: 0 0 14px; max-width: 34ch">{{ t('foot.tagline') }}</p>
-            <p style="margin: 0">© {{ year }} {{ CONFIG.brand }}. {{ t('foot.rights') }}</p>
+        <div class="f-top">
+          <div class="f-brand">
+            <div class="f-logo">{{ CONFIG.brand }}</div>
+            <p class="f-tagline">{{ t('foot.tagline') }}</p>
+            <nav class="f-nav">
+              <router-link v-for="n in navs" :key="n.to" :to="n.to">{{ t(n.key) }}</router-link>
+            </nav>
           </div>
-          <div>
+          <div class="f-contact">
             <h4>{{ t('nav.contact') }}</h4>
-            <p><a :href="LINKS.wa('')" target="_blank" rel="noopener">WhatsApp</a></p>
-            <p><a :href="LINKS.fb()" target="_blank" rel="noopener">Facebook</a></p>
-            <p><a :href="LINKS.mail('Enquiry')">{{ CONFIG.email }}</a></p>
+            <a :href="LINKS.wa('')" target="_blank" rel="noopener">WhatsApp</a>
+            <a :href="LINKS.fb()" target="_blank" rel="noopener">Facebook</a>
+            <a :href="LINKS.mail('Enquiry')">{{ CONFIG.email }}</a>
           </div>
-          <div>
-            <h4>{{ t('foot.defaultLang') }}</h4>
-            <a-select
-              :value="lang.auto ? 'auto' : lang.lang"
-              size="small"
-              style="width: 100%; margin-bottom: 10px"
-              :options="[{ value: 'auto', label: t('foot.autoDetect') }, ...LANGS.map(l => ({ value: l.code, label: l.label }))]"
-              @change="v => (v === 'auto' ? toggleAuto(true) : setDefault(v))"
-            />
-            <div class="auto-row">
-            <a-checkbox :checked="lang.auto" size="small" @change="toggleAuto" />
-              <span>{{ t('foot.autoDetect') }}</span>
-            </div>
-            <a-button size="small" block style="margin-top: 10px" @click="reset">{{ t('foot.reset') }}</a-button>
-          </div>
+        </div>
+
+        <div class="f-legal">
           <div>
             <h4>{{ t('foot.ip') }}</h4>
-            <p style="margin: 0 0 12px">{{ t('foot.ipText') }}</p>
-            <h4>{{ t('foot.legal') }}</h4>
-            <p style="margin: 0">{{ t('foot.legalText') }}</p>
+            <p>{{ t('foot.ipText') }}</p>
           </div>
+          <div>
+            <h4>{{ t('foot.legal') }}</h4>
+            <p>{{ t('foot.legalText') }}</p>
+          </div>
+        </div>
+
+        <div class="f-bottom">
+          <span>© {{ year }} {{ CONFIG.brand }}. {{ t('foot.rights') }}</span>
         </div>
       </div>
     </footer>
@@ -302,7 +290,6 @@ const year = new Date().getFullYear()
 .ci-main { flex: 1; display: grid; gap: 3px; }
 .ci-meta { font-size: 12px; color: var(--ink-4); }
 .ci-acts { margin-top: 20px; display: grid; gap: 10px; }
-.auto-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-3); }
 .pill.ghost { background: none; border: 1px solid var(--line-soft); color: var(--ink-2); }
 .pill.ghost:hover { background: var(--bg-soft); }
 

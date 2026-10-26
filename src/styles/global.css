@@ -229,9 +229,75 @@ button, input, select, textarea { font: inherit; }
 .pill.light { background: #fff; color: var(--ink); }
 
 /* ---------------- 页脚 ---------------- */
-.footer { background: var(--bg-soft); padding: 56px 0 40px; font-size: 13px; color: var(--ink-3); }
-.footer h4 { font-size: 13px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
-.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 32px; }
+.footer {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--line-soft);
+  padding: 68px 0 30px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.f-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 48px; }
+.f-brand { max-width: 420px; }
+.f-logo {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  color: var(--ink);
+}
+.f-tagline { margin: 12px 0 24px; font-size: 14px; line-height: 1.6; color: var(--ink-3); }
+.f-nav { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+.f-nav a { position: relative; font-size: 13.5px; color: var(--ink-2); }
+.f-nav a:hover { color: var(--ink); }
+.f-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .3s var(--ease);
+}
+.f-nav a:hover::after { transform: scaleX(1); }
+
+.f-contact { flex: none; min-width: 210px; }
+.f-contact h4,
+.f-legal h4 {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.f-contact a {
+  display: block;
+  width: fit-content;
+  margin-bottom: 9px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+.f-contact a:hover { color: var(--ink); }
+
+.f-legal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.f-legal p { margin: 0; font-size: 12.5px; line-height: 1.75; color: var(--ink-4); max-width: 54ch; }
+
+.f-bottom {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px;
+  color: var(--ink-4);
+}
 
 /* ---------------- 悬浮按钮 ---------------- */
 .fab {
@@ -256,10 +322,12 @@ button, input, select, textarea { font: inherit; }
 /* ---------------- 响应式 ---------------- */
 @media (max-width: 860px) {
   .nav-links { display: none; }
-  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer { padding-top: 52px; }
+  .f-top { flex-direction: column; gap: 32px; }
+  .f-contact { min-width: 0; }
+  .f-legal { grid-template-columns: 1fr; gap: 26px; margin-top: 34px; }
 }
 @media (max-width: 560px) {
-  .footer-grid { grid-template-columns: 1fr; }
   body { font-size: 16px; }
 }
 
