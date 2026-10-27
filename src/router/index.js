@@ -30,6 +30,12 @@ const routes = [
     component: () => import('@/views/ContactView.vue'),
     meta: { nav: 'nav.contact' }
   },
+  {
+    path: '/account',
+    name: 'account',
+    component: () => import('@/views/AccountView.vue'),
+    meta: { nav: 'acct.title' }
+  },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

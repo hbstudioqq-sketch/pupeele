@@ -6,6 +6,7 @@ import message from 'ant-design-vue/es/message'
 import { useLangStore } from '@/stores/lang'
 import { useEnquiryStore } from '@/stores/enquiry'
 import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
 import { LANGS } from '@/locales'
 import { CONFIG, LINKS } from '@/data/config'
 import { header, copyText, downloadText, openWhatsApp, openFacebook } from '@/composables/useSend'
@@ -19,9 +20,8 @@ const route = useRoute()
 const lang = useLangStore()
 const enquiry = useEnquiryStore()
 const auth = useAuthStore()
+const ui = useUiStore()
 
-const accountOpen = ref(false)
-const accountIntent = ref('account')
 const menuOpen = ref(false)
 
 const theme = {
@@ -62,27 +62,41 @@ function buildCartText () {
   return s
 }
 
+/* 询价门禁：必须处于有效订阅状态。
+   订阅入口统一在「我的页面」里，这里只负责把人带过去；
+   未登录则先弹出登录框，登录成功后会直接落到订阅面板。 */
+function requireSubscribe () {
+  if (auth.canEnquire) return true
+  ui.askToSubscribe()
+  if (auth.isLoggedIn) router.push('/account')
+  else ui.openAccount('subs')
+  return false
+}
+
 function sendCart () {
-  /* 询价门禁：必须处于有效订阅状态 */
-  if (!auth.canEnquire) {
-    accountIntent.value = 'subscribe'
-    accountOpen.value = true
-    return
-  }
+  if (!requireSubscribe()) return
   sendText.value = buildCartText()
   sendOpen.value = true
   saveEnquiry()
 }
 
-/* 询价篮落库：与发送弹窗互不阻塞 */
+/* 询价篮落库：与发送弹窗互不阻塞。
+   登录用户带上 user_id，方便在「我的询价单」里查看；
+   若数据库尚未执行 account.sql（缺 user_id 列），自动退回匿名写入。 */
 async function saveEnquiry () {
+  const base = {
+    lang: locale.value,
+    item_count: enquiry.count,
+    items: cartItems.value.map(i => ({ id: i.id, name: i.label, meta: i.meta || null })),
+    text: sendText.value
+  }
   try {
-    const { error } = await supabase.from('enquiries').insert({
-      lang: locale.value,
-      item_count: enquiry.count,
-      items: cartItems.value.map(i => ({ id: i.id, name: i.label, meta: i.meta || null })),
-      text: sendText.value
-    })
+    let payload = base
+    if (auth.user) payload = { ...base, user_id: auth.user.id }
+    let { error } = await supabase.from('enquiries').insert(payload)
+    if (error && payload !== base) {
+      ({ error } = await supabase.from('enquiries').insert(base))
+    }
     if (error) throw error
     message.success(t('db.saved'))
   } catch (e) {
@@ -92,8 +106,14 @@ async function saveEnquiry () {
 }
 
 function onEnquiry () {
-  if (auth.canEnquire) enquiry.open = true
-  else { accountIntent.value = 'subscribe'; accountOpen.value = true }
+  if (!requireSubscribe()) return
+  enquiry.open = true
+}
+
+/* 已登录 → 进入我的页面；未登录 → 打开登录弹窗 */
+function onAccount () {
+  if (auth.isLoggedIn) router.push('/account')
+  else ui.openAccount()
 }
 
 function setDefault (code) {
@@ -102,6 +122,14 @@ function setDefault (code) {
 }
 
 watch(() => lang.lang, v => { locale.value = v })
+
+/* 登录 / 注册 / Gmail 回跳成功后，直接进入「我的页面」 */
+watch(() => auth.redirectToAccount, v => {
+  if (!v) return
+  auth.redirectToAccount = false
+  ui.accountOpen = false
+  if (route.name !== 'account') router.push('/account')
+})
 
 /* 标题与描述跟随语言 + 路由变化，避免切页后标签页总显示首页标题 */
 watch([() => locale.value, () => route.meta.nav], () => {
@@ -157,8 +185,8 @@ const year = new Date().getFullYear()
           {{ t('nav.enquiry') }}
           <span v-if="enquiry.count" class="badge">{{ enquiry.count }}</span>
         </button>
-        <button class="pill ghost" @click="accountOpen = true; accountIntent = 'account'">
-          <template v-if="auth.isLoggedIn">{{ auth.email.split('@')[0] }}</template>
+        <button class="pill ghost account-pill" @click="onAccount">
+          <template v-if="auth.isLoggedIn">{{ auth.displayName }}</template>
           <template v-else>{{ t('nav.account') }}</template>
         </button>
       </div>
@@ -172,8 +200,8 @@ const year = new Date().getFullYear()
           active-class="active"
           @click="menuOpen = false"
         >{{ t(n.key) }}</router-link>
-        <button class="mnav-account" @click="menuOpen = false; accountOpen = true; accountIntent = 'account'">
-          {{ auth.isLoggedIn ? auth.email : t('nav.account') }}
+        <button class="mnav-account" @click="menuOpen = false; onAccount()">
+          {{ auth.isLoggedIn ? auth.displayName : t('nav.account') }}
         </button>
       </nav>
     </a-drawer>
@@ -262,10 +290,7 @@ const year = new Date().getFullYear()
       filename="pupeele-enquiry.txt"
     />
 
-    <AccountModal
-      v-model:open="accountOpen"
-      :intent="accountIntent"
-    />
+    <AccountModal v-model:open="ui.accountOpen" />
   </a-config-provider>
 </template>
 
@@ -292,6 +317,7 @@ const year = new Date().getFullYear()
 .ci-acts { margin-top: 20px; display: grid; gap: 10px; }
 .pill.ghost { background: none; border: 1px solid var(--line-soft); color: var(--ink-2); }
 .pill.ghost:hover { background: var(--bg-soft); }
+.account-pill { max-width: 148px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; line-height: 32px; }
 
 .burger {
   display: none; align-items: center; justify-content: center;

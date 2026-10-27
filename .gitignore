@@ -3,4 +3,4 @@ dist
 .screenshots
 .vscode
 .trae
-
+.env

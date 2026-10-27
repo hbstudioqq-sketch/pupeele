@@ -1,20 +1,20 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import message from 'ant-design-vue/es/message'
 import { useAuthStore, pwdChecks, pwdScore, EMAIL_RE } from '@/stores/auth'
 
 const props = defineProps({
-  open: { type: Boolean, default: false },
-  intent: { type: String, default: 'account' } // 'account' | 'subscribe'
+  open: { type: Boolean, default: false }
 })
 const emit = defineEmits(['update:open'])
 
 const { t } = useI18n()
+const router = useRouter()
 const auth = useAuthStore()
 
-const mode = ref('signup')        // signup | login （auth 面板内的子视图）
-const panel = ref('auth')         // auth | sub
+const mode = ref('signup')        // signup | login
 const email = ref('')
 const pw = ref('')
 const pw2 = ref('')
@@ -25,7 +25,6 @@ const busyG = ref(false)    // Gmail 跳转中
 watch(() => props.open, (v) => {
   if (v) {
     err.value = ''
-    panel.value = props.intent === 'subscribe' ? 'sub' : 'auth'
     if (!auth.isLoggedIn) mode.value = 'signup'
   }
 })
@@ -41,11 +40,6 @@ const strength = computed(() => {
   return { idx: 4, label: t('auth.strong'), pct: 100 }
 })
 const strengthClass = ['', 's-weak', 's-fair', 's-good', 's-strong'][strength.value.idx]
-
-const plans = [
-  { tier: 'monthly', label: 'auth.plan.monthly', price: 'auth.plan.priceMonth', months: 1 },
-  { tier: 'yearly', label: 'auth.plan.yearly', price: 'auth.plan.priceYear', months: 12 }
-]
 
 function close () { emit('update:open', false) }
 
@@ -86,24 +80,15 @@ function doGoogle () {
     .catch(e => { err.value = e.message; busyG.value = false })
 }
 function afterAuth () {
-  // 登录/注册成功后：若本意是订阅则跳到订阅面板
-  if (props.intent === 'subscribe') panel.value = 'sub'
-  else { email.value = ''; pw.value = ''; pw2.value = '' }
+  // 登录 / 注册成功：关闭弹窗，进入「我的页面」（订阅与资料均在那里管理）
+  email.value = ''; pw.value = ''; pw2.value = ''
+  close()
+  router.push('/account')
 }
-function doSubscribe (tier) {
-  auth.subscribe(tier)
-  message.success(t('auth.okSub'))
+function goAccount () {
+  close()
+  router.push('/account')
 }
-function doCancel () {
-  auth.cancel()
-  message.success(t('auth.okCancel'))
-}
-
-const expiryText = computed(() => {
-  if (!auth.sub || auth.sub.tier === 'none') return t('auth.tier.none')
-  const key = auth.isActive ? 'auth.expires' : 'auth.expired'
-  return t(key, { date: auth.expiryDate })
-})
 </script>
 
 <template>
@@ -121,17 +106,14 @@ const expiryText = computed(() => {
         <div class="w-name">{{ t('auth.welcome') }}</div>
         <div class="w-mail">{{ auth.email }}</div>
       </div>
-      <a-button size="small" @click="auth.logout()">{{ t('auth.logout') }}</a-button>
+      <div class="w-acts">
+        <a-button size="small" type="primary" @click="goAccount">{{ t('acct.title') }}</a-button>
+        <a-button size="small" @click="auth.logout()">{{ t('auth.logout') }}</a-button>
+      </div>
     </div>
 
-    <!-- 面板切换 -->
-    <div class="tabs">
-      <button :class="{ on: panel === 'auth' }" @click="panel = 'auth'">{{ t('auth.tab.signup') }} / {{ t('auth.tab.login') }}</button>
-      <button :class="{ on: panel === 'sub' }" @click="panel = 'sub'">{{ t('auth.tab.subscribe') }}</button>
-    </div>
-
-    <!-- 账户面板 -->
-    <div v-if="panel === 'auth'">
+    <!-- 账户面板：只负责注册 / 登录，订阅与资料在「我的页面」里管理 -->
+    <div>
       <div class="seg">
         <button :class="{ on: mode === 'signup' }" @click="mode = 'signup'">{{ t('auth.tab.signup') }}</button>
         <button :class="{ on: mode === 'login' }" @click="mode = 'login'">{{ t('auth.tab.login') }}</button>
@@ -205,44 +187,6 @@ const expiryText = computed(() => {
         </template>
       </p>
     </div>
-
-    <!-- 订阅面板 -->
-    <div v-else>
-      <template v-if="!auth.isLoggedIn">
-        <p class="gate">{{ t('auth.gateText') }}</p>
-        <a-button type="primary" size="large" block @click="mode = 'signup'; panel = 'auth'">
-          {{ t('auth.tab.signup') }}
-        </a-button>
-      </template>
-      <template v-else>
-        <h4 class="sub-h">{{ t('auth.subTitle') }}</h4>
-        <p class="sub-p">{{ t('auth.subText') }}</p>
-
-        <div class="plans">
-          <div v-for="p in plans" :key="p.tier" class="plan">
-            <div class="p-name">{{ t(p.label) }}</div>
-            <div class="p-price">{{ t(p.price) }}</div>
-            <div v-if="p.tier === 'yearly'" class="p-save">{{ t('auth.plan.save') }}</div>
-            <a-button
-              type="primary" block size="large"
-              :disabled="auth.sub && auth.sub.tier === p.tier && auth.isActive"
-              @click="doSubscribe(p.tier)"
-            >{{ t('auth.subscribeBtn', { price: t(p.price) }) }}</a-button>
-          </div>
-        </div>
-
-        <div class="status">
-          <div>
-            <div class="s-plan">{{ t('auth.tier.' + (auth.sub ? auth.sub.tier : 'none')) }}</div>
-            <div class="s-meta">
-              <span :class="['badge', auth.isActive ? 'on' : 'off']">{{ t('auth.active') }}</span>
-              {{ expiryText }}
-            </div>
-          </div>
-          <a-button v-if="auth.isActive" size="small" @click="doCancel">{{ t('auth.cancel') }}</a-button>
-        </div>
-      </template>
-    </div>
   </a-modal>
 </template>
 
@@ -254,12 +198,7 @@ const expiryText = computed(() => {
 }
 .w-name { font-weight: 600; }
 .w-mail { font-size: 12.5px; color: var(--ink-4); word-break: break-all; }
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.tabs button {
-  flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--line-soft);
-  background: none; color: var(--ink-3); cursor: pointer; font-size: 13.5px;
-}
-.tabs button.on { background: var(--ink-1); color: #fff; border-color: var(--ink-1); }
+.w-acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .seg { display: flex; gap: 8px; margin-bottom: 16px; }
 .seg button {
   flex: 1; padding: 8px; border-radius: 9px; border: 1px solid var(--line-soft);
@@ -287,18 +226,4 @@ const expiryText = computed(() => {
 .glogo { flex: none; }
 .switch { text-align: center; font-size: 13px; color: var(--ink-4); margin: 14px 0 0; }
 .switch a { color: var(--ink-1); cursor: pointer; margin-left: 4px; }
-.gate { background: var(--bg-soft); border-radius: 12px; padding: 14px; font-size: 13.5px; color: var(--ink-3); margin: 0 0 14px; }
-.sub-h { margin: 0 0 6px; font-size: 16px; }
-.sub-p { margin: 0 0 16px; font-size: 13.5px; color: var(--ink-3); }
-.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.plan { border: 1px solid var(--line-soft); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.p-name { font-weight: 600; }
-.p-price { font-size: 18px; font-weight: 700; }
-.p-save { font-size: 12px; color: #2faa6a; }
-.status { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; padding: 14px; border-radius: 12px; background: var(--bg-soft); }
-.s-plan { font-weight: 600; }
-.s-meta { font-size: 12.5px; color: var(--ink-4); display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; }
-.badge.on { background: rgba(47,170,106,.16); color: #2faa6a; }
-.badge.off { background: rgba(229,72,77,.14); color: #e5484d; }
 </style>

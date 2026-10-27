@@ -8,9 +8,11 @@ import SendSheet from '@/components/SendSheet.vue'
 import CategoryArt from '@/components/CategoryArt.vue'
 import { header } from '@/composables/useSend'
 import { useReveal } from '@/composables/useReveal'
+import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/supabase'
 
 const { t, locale } = useI18n()
+const auth = useAuthStore()
 useReveal()
 
 const form = reactive({
@@ -65,23 +67,31 @@ function submit () {
   save()
 }
 
-/* 落库：不阻塞发送弹窗，失败时提示用户仍可复制 / WhatsApp 发送 */
+/* 落库：不阻塞发送弹窗，失败时提示用户仍可复制 / WhatsApp 发送。
+   登录用户写入 user_id，便于在「我的询价单」中查看；
+   若数据库尚未执行 account.sql（缺 user_id 列），退回匿名写入。 */
 async function save () {
+  const base = {
+    lang: locale.value,
+    doll_type: form.type,
+    size: form.size,
+    style: form.style,
+    colorway: form.colorway || null,
+    categories: form.cats,
+    qty: form.qty || null,
+    target: form.target || null,
+    lead: form.lead,
+    name: form.name || null,
+    contact: form.contact,
+    notes: form.notes || null
+  }
   try {
-    const { error } = await supabase.from('requests').insert({
-      lang: locale.value,
-      doll_type: form.type,
-      size: form.size,
-      style: form.style,
-      colorway: form.colorway || null,
-      categories: form.cats,
-      qty: form.qty || null,
-      target: form.target || null,
-      lead: form.lead,
-      name: form.name || null,
-      contact: form.contact,
-      notes: form.notes || null
-    })
+    let payload = base
+    if (auth.user) payload = { ...base, user_id: auth.user.id }
+    let { error } = await supabase.from('requests').insert(payload)
+    if (error && payload !== base) {
+      ({ error } = await supabase.from('requests').insert(base))
+    }
     if (error) throw error
     message.success(t('db.saved'))
   } catch (e) {
