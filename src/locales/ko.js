@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': '가격 변동',
   'acct.subsLook': '스타일링 제안',
   'acct.subsSendTo': '알림은 {email} 로 발송됩니다',
-  'acct.subsSaved': '알림 설정이 저장되었습니다'
+  'acct.subsSaved': '알림 설정이 저장되었습니다',
+  'acct.tab.logs': '구독 기록',
+  'acct.logsHint': '시작, 갱신, 취소가 모두 여기에 기록됩니다.',
+  'acct.logsCount': '기록 수',
+  'acct.logsSpent': '누적 결제',
+  'acct.logsSince': '최초 구독',
+  'acct.logsEmpty': '아직 구독 기록이 없습니다',
+  'acct.logsEmptyText': '구독하면 플랜 변경과 유효 기간이 여기에 기록되어 확인할 수 있습니다.',
+  'acct.logsCta': '구독하러 가기',
+  'acct.logsView': '기록 보기',
+  'acct.logAction.subscribe': '시작',
+  'acct.logAction.renew': '갱신',
+  'acct.logAction.change': '플랜 변경',
+  'acct.logAction.cancel': '취소',
+  'acct.logFrom': '이전 플랜 {plan}',
+  'acct.subsDaysLeft': '{n}일 남음'
 }

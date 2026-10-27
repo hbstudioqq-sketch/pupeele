@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': '价格变动',
   'acct.subsLook': '搭配灵感',
   'acct.subsSendTo': '通知将发送至 {email}',
-  'acct.subsSaved': '偏好已保存'
+  'acct.subsSaved': '偏好已保存',
+  'acct.tab.logs': '订阅记录',
+  'acct.logsHint': '每次开通、续订与取消都会记录在这里。',
+  'acct.logsCount': '记录条数',
+  'acct.logsSpent': '累计支付',
+  'acct.logsSince': '首次订阅',
+  'acct.logsEmpty': '还没有订阅记录',
+  'acct.logsEmptyText': '开通会员后，方案变更与有效期都会记录在这里，方便随时核对。',
+  'acct.logsCta': '去订阅',
+  'acct.logsView': '查看订阅记录',
+  'acct.logAction.subscribe': '开通',
+  'acct.logAction.renew': '续订',
+  'acct.logAction.change': '方案变更',
+  'acct.logAction.cancel': '取消',
+  'acct.logFrom': '原方案 {plan}',
+  'acct.subsDaysLeft': '剩余 {n} 天'
 }

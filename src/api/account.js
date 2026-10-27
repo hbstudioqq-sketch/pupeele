@@ -49,11 +49,30 @@ export async function saveSubscription (id, patch) {
   return data
 }
 
+/* 订阅变更记录（开通 / 续订 / 换方案 / 取消） */
+export async function listSubscriptionLogs (id, limit = 50) {
+  const { data, error } = await supabase
+    .from('subscription_logs')
+    .select('id,action,plan,from_plan,started_at,expires_at,amount_cents,currency,created_at')
+    .eq('user_id', id)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data || []
+}
+
+export async function logSubscription (id, row) {
+  const { error } = await supabase
+    .from('subscription_logs')
+    .insert({ user_id: id, ...row })
+  if (error) throw error
+}
+
 /* 询价篮提交记录 */
 export async function listEnquiries (id, limit = 50) {
   const { data, error } = await supabase
     .from('enquiries')
-    .select('id,created_at,item_count,items,text,status,contact')
+    .select('id,created_at,item_count,items,text,status')
     .eq('user_id', id)
     .order('created_at', { ascending: false })
     .limit(limit)

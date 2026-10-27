@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': '価格の変更',
   'acct.subsLook': 'コーディネート事例',
   'acct.subsSendTo': '通知は {email} に送信されます',
-  'acct.subsSaved': '通知設定を保存しました'
+  'acct.subsSaved': '通知設定を保存しました',
+  'acct.tab.logs': '購読履歴',
+  'acct.logsHint': '開始・更新・解約はすべてここに記録されます。',
+  'acct.logsCount': '記録数',
+  'acct.logsSpent': '累計支払額',
+  'acct.logsSince': '初回購読',
+  'acct.logsEmpty': '購読履歴はまだありません',
+  'acct.logsEmptyText': '購読すると、プラン変更や有効期間がここに記録されます。',
+  'acct.logsCta': '購読する',
+  'acct.logsView': '履歴を見る',
+  'acct.logAction.subscribe': '開始',
+  'acct.logAction.renew': '更新',
+  'acct.logAction.change': 'プラン変更',
+  'acct.logAction.cancel': '解約',
+  'acct.logFrom': '以前のプラン {plan}',
+  'acct.subsDaysLeft': '残り {n} 日'
 }

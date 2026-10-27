@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': 'Variations de prix',
   'acct.subsLook': 'Inspirations de style',
   'acct.subsSendTo': 'Les notifications seront envoyées à {email}',
-  'acct.subsSaved': 'Préférences enregistrées'
+  'acct.subsSaved': 'Préférences enregistrées',
+  'acct.tab.logs': 'Historique d’abonnement',
+  'acct.logsHint': 'Chaque souscription, renouvellement et annulation est enregistré ici.',
+  'acct.logsCount': 'Enregistrements',
+  'acct.logsSpent': 'Total payé',
+  'acct.logsSince': 'Premier abonnement',
+  'acct.logsEmpty': 'Aucun historique d’abonnement',
+  'acct.logsEmptyText': 'Dès que vous souscrirez, les changements de formule et les périodes de validité seront enregistrés ici.',
+  'acct.logsCta': 'Voir l’abonnement',
+  'acct.logsView': 'Voir l’historique',
+  'acct.logAction.subscribe': 'Souscrit',
+  'acct.logAction.renew': 'Renouvelé',
+  'acct.logAction.change': 'Formule modifiée',
+  'acct.logAction.cancel': 'Annulé',
+  'acct.logFrom': 'Ancienne formule : {plan}',
+  'acct.subsDaysLeft': '{n} jours restants'
 }

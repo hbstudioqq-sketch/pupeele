@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': 'Price changes',
   'acct.subsLook': 'Styling inspiration',
   'acct.subsSendTo': 'Notifications go to {email}',
-  'acct.subsSaved': 'Preferences saved'
+  'acct.subsSaved': 'Preferences saved',
+  'acct.tab.logs': 'Subscription history',
+  'acct.logsHint': 'Every start, renewal and cancellation is recorded here.',
+  'acct.logsCount': 'Records',
+  'acct.logsSpent': 'Total paid',
+  'acct.logsSince': 'First subscription',
+  'acct.logsEmpty': 'No subscription history yet',
+  'acct.logsEmptyText': 'Once you subscribe, plan changes and validity periods will be recorded here for easy reference.',
+  'acct.logsCta': 'Go to subscription',
+  'acct.logsView': 'View history',
+  'acct.logAction.subscribe': 'Started',
+  'acct.logAction.renew': 'Renewed',
+  'acct.logAction.change': 'Plan changed',
+  'acct.logAction.cancel': 'Cancelled',
+  'acct.logFrom': 'Was {plan}',
+  'acct.subsDaysLeft': '{n} days left'
 }

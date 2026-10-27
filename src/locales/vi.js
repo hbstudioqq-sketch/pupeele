@@ -498,5 +498,20 @@ export default {
   'acct.subsPrice': 'Thay đổi giá',
   'acct.subsLook': 'Ý tưởng phối đồ',
   'acct.subsSendTo': 'Thông báo sẽ gửi đến {email}',
-  'acct.subsSaved': 'Đã lưu tùy chọn'
+  'acct.subsSaved': 'Đã lưu tùy chọn',
+  'acct.tab.logs': 'Lịch sử đăng ký',
+  'acct.logsHint': 'Mỗi lần bắt đầu, gia hạn và hủy đều được ghi lại tại đây.',
+  'acct.logsCount': 'Số bản ghi',
+  'acct.logsSpent': 'Tổng đã thanh toán',
+  'acct.logsSince': 'Đăng ký lần đầu',
+  'acct.logsEmpty': 'Chưa có lịch sử đăng ký',
+  'acct.logsEmptyText': 'Sau khi đăng ký, các thay đổi gói và thời hạn sẽ được ghi lại tại đây để bạn đối chiếu.',
+  'acct.logsCta': 'Đi đến đăng ký',
+  'acct.logsView': 'Xem lịch sử',
+  'acct.logAction.subscribe': 'Bắt đầu',
+  'acct.logAction.renew': 'Gia hạn',
+  'acct.logAction.change': 'Đổi gói',
+  'acct.logAction.cancel': 'Đã hủy',
+  'acct.logFrom': 'Gói cũ {plan}',
+  'acct.subsDaysLeft': 'Còn {n} ngày'
 }

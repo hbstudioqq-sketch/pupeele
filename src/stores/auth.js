@@ -6,7 +6,9 @@ import {
   fetchProfile,
   saveProfile,
   fetchSubscription,
-  saveSubscription
+  saveSubscription,
+  listSubscriptionLogs,
+  logSubscription
 } from '@/api/account'
 
 /* ============================================================
@@ -23,6 +25,9 @@ const KEY_SUB = 'pupee.sub' // 未登录时的本地订阅缓存
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000
+
+/* 演示价格（美分）：与文案里的 $9.9 / $99 保持一致 */
+const PLAN_CENTS = { monthly: 990, yearly: 9900 }
 
 function load (k, fallback) {
   try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback } catch { return fallback }
@@ -81,6 +86,9 @@ export const useAuthStore = defineStore('auth', {
     sub: load(KEY_SUB, null),       // { tier: 'none'|'monthly'|'yearly', since, expires }
     profile: null,                  // profiles 行
     prefs: { ...DEFAULT_PREFS },    // 通知偏好
+    subLogs: [],                    // 订阅变更记录（subscription_logs）
+    logsLoading: false,
+    logsError: false,
     accountReady: false,            // 资料 + 订阅是否已从云端拉取
     accountError: false,            // 云端不可用（表未建 / 网络异常）
     redirectToAccount: false        // 登录成功后由 App 跳到 /account
@@ -131,6 +139,8 @@ export const useAuthStore = defineStore('auth', {
 
       if (!this.user) {
         this.profile = null
+        this.subLogs = []
+        this.logsError = false
         this.accountReady = false
         this.accountError = false
         return
@@ -274,9 +284,34 @@ export const useAuthStore = defineStore('auth', {
       this._set(null)
     },
     _persistSub () { save(KEY_SUB, this.sub) },
+    /* 读取订阅变更记录（进入「订阅记录」面板时调用） */
+    async loadLogs () {
+      if (!this.user) { this.subLogs = []; return }
+      this.logsLoading = true
+      this.logsError = false
+      try {
+        this.subLogs = await listSubscriptionLogs(this.user.id)
+      } catch (e) {
+        console.warn('[account] subscription logs load failed（是否已执行最新 supabase/account.sql？）', e)
+        this.logsError = true
+      } finally {
+        this.logsLoading = false
+      }
+    },
+    /* 写一条变更记录：失败不影响主流程，只记录日志 */
+    async _log (row) {
+      if (!this.user) return
+      try {
+        await logSubscription(this.user.id, row)
+      } catch (e) {
+        console.warn('[account] subscription log insert failed（是否已执行最新 supabase/account.sql？）', e)
+      }
+    },
     async subscribe (tier) {
       const dur = tier === 'yearly' ? YEAR_MS : MONTH_MS
       const now = Date.now()
+      const from = this.sub?.tier || 'none'
+      const action = from === 'none' ? 'subscribe' : from === tier ? 'renew' : 'change'
       this.sub = { tier, since: now, expires: now + dur }
       this._persistSub()
       if (!this.user) return
@@ -286,12 +321,22 @@ export const useAuthStore = defineStore('auth', {
           started_at: new Date(now).toISOString(),
           expires_at: new Date(now + dur).toISOString()
         })
+        await this._log({
+          action,
+          plan: tier,
+          from_plan: from,
+          started_at: new Date(now).toISOString(),
+          expires_at: new Date(now + dur).toISOString(),
+          amount_cents: PLAN_CENTS[tier] || 0,
+          currency: 'USD'
+        })
       } catch (e) {
         console.warn('[account] subscription save failed', e)
         this.accountError = true
       }
     },
     async cancel () {
+      const from = this.sub?.tier || 'none'
       this.sub = { tier: 'none', since: null, expires: null }
       this._persistSub()
       if (!this.user) return
@@ -300,6 +345,13 @@ export const useAuthStore = defineStore('auth', {
           plan: 'none',
           started_at: null,
           expires_at: null
+        })
+        await this._log({
+          action: 'cancel',
+          plan: 'none',
+          from_plan: from === 'none' ? null : from,
+          amount_cents: 0,
+          currency: 'USD'
         })
       } catch (e) {
         console.warn('[account] subscription cancel failed', e)

@@ -21,7 +21,8 @@ const tab = ref('profile')
 const tabs = [
   { id: 'profile', key: 'acct.tab.profile', icon: 'user' },
   { id: 'orders', key: 'acct.tab.orders', icon: 'orders' },
-  { id: 'subs', key: 'acct.tab.subs', icon: 'bell' }
+  { id: 'subs', key: 'acct.tab.subs', icon: 'bell' },
+  { id: 'logs', key: 'acct.tab.logs', icon: 'logs' }
 ]
 
 /* 询价门禁等入口会把目标面板放在 ui.accountTab 上，进来后直接落到对应面板 */
@@ -30,6 +31,11 @@ watch(() => ui.accountTab, v => {
   tab.value = v
   ui.accountTab = ''
 }, { immediate: true })
+
+/* 进入「订阅记录」面板时拉取最新记录 */
+watch(tab, v => {
+  if (v === 'logs' && auth.isLoggedIn) auth.loadLogs()
+})
 
 /* ---------- 个人信息 ---------- */
 const form = reactive({
@@ -202,6 +208,10 @@ const expiryText = computed(() => {
   if (tier.value === 'none' || !auth.sub?.expires) return ''
   return t(auth.isActive ? 'auth.expires' : 'auth.expired', { date: auth.expiryDate })
 })
+const daysLeft = computed(() => {
+  if (!auth.isActive || !auth.sub?.expires) return 0
+  return Math.max(1, Math.ceil((auth.sub.expires - Date.now()) / 86400000))
+})
 
 async function subscribe (plan) {
   await auth.subscribe(plan)
@@ -220,6 +230,22 @@ async function savePrefs () {
     prefsSaving.value = false
   }
 }
+
+/* ---------- 订阅记录 ---------- */
+const money = (cents, cur = 'USD') =>
+  new Intl.NumberFormat(locale.value, {
+    style: 'currency',
+    currency: cur,
+    currencyDisplay: 'narrowSymbol'
+  }).format((cents || 0) / 100)
+
+const spentText = computed(() =>
+  money(auth.subLogs.reduce((sum, l) => sum + (l.action === 'cancel' ? 0 : (l.amount_cents || 0)), 0))
+)
+const firstLogDate = computed(() =>
+  auth.subLogs.length ? dateText(auth.subLogs[auth.subLogs.length - 1].created_at) : ''
+)
+const planText = p => (p === 'none' ? t('acct.subsNone') : t('auth.tier.' + p))
 
 /* ---------- 其他 ---------- */
 const memberDate = computed(() => fmtDate(Date.parse(auth.memberSince)))
@@ -284,9 +310,13 @@ function goCollections () { router.push('/collections') }
               <rect x="5" y="3" width="14" height="18" rx="2.5" />
               <path d="M9 8h6M9 12h6M9 16h4" />
             </svg>
-            <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+            <svg v-else-if="tb.icon === 'bell'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M18 8a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
               <path d="M10.5 20a1.8 1.8 0 0 0 3 0" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M12 7.5V12l3 2" />
             </svg>
             <span>{{ t(tb.key) }}</span>
           </button>
@@ -440,7 +470,7 @@ function goCollections () { router.push('/collections') }
           </div>
 
           <!-- 我的订阅 -->
-          <div v-else class="pane">
+          <div v-else-if="tab === 'subs'" class="pane">
             <div class="p-head">
               <h2>{{ t('acct.tab.subs') }}</h2>
               <p v-if="auth.email">{{ t('acct.subsSendTo', { email: auth.email }) }}</p>
@@ -450,7 +480,10 @@ function goCollections () { router.push('/collections') }
               <div>
                 <p class="plan-k">{{ t('acct.subsPlan') }}</p>
                 <p class="plan-name">{{ planName }}</p>
-                <p v-if="expiryText" class="plan-meta">{{ expiryText }}</p>
+                <p v-if="expiryText" class="plan-meta">
+                  {{ expiryText }}
+                  <span v-if="daysLeft">· {{ t('acct.subsDaysLeft', { n: daysLeft }) }}</span>
+                </p>
               </div>
               <span class="pbadge" :class="{ on: auth.isActive }">
                 {{ auth.isActive ? t('auth.active') : t('auth.tier.none') }}
@@ -465,6 +498,7 @@ function goCollections () { router.push('/collections') }
                 {{ t('auth.plan.yearly') }} · {{ t('auth.plan.priceYear') }}
               </button>
               <button v-if="auth.isActive" class="text-link" @click="cancelPlan">{{ t('auth.cancel') }}</button>
+              <button class="text-link" @click="tab = 'logs'">{{ t('acct.logsView') }}</button>
             </div>
 
             <h3 class="h3">{{ t('acct.subsPrefs') }}</h3>
@@ -487,6 +521,66 @@ function goCollections () { router.push('/collections') }
                 {{ t('acct.save') }}
               </a-button>
             </div>
+          </div>
+
+          <!-- 订阅记录 -->
+          <div v-else class="pane">
+            <div class="p-head">
+              <h2>{{ t('acct.tab.logs') }}</h2>
+              <p>{{ t('acct.logsHint') }}</p>
+            </div>
+
+            <div class="log-stats">
+              <div class="stat">
+                <span>{{ t('acct.logsCount') }}</span>
+                <strong>{{ auth.subLogs.length }}</strong>
+              </div>
+              <div class="stat">
+                <span>{{ t('acct.logsSpent') }}</span>
+                <strong>{{ spentText }}</strong>
+              </div>
+              <div class="stat">
+                <span>{{ t('acct.logsSince') }}</span>
+                <strong>{{ firstLogDate || '—' }}</strong>
+              </div>
+            </div>
+
+            <div v-if="auth.logsLoading" class="skel">
+              <span v-for="i in 3" :key="i" />
+            </div>
+
+            <div v-else-if="auth.logsError" class="empty">
+              <h3>{{ t('auth.netError') }}</h3>
+              <button class="pill" @click="auth.loadLogs()">{{ t('acct.retry') }}</button>
+            </div>
+
+            <div v-else-if="!auth.subLogs.length" class="empty">
+              <h3>{{ t('acct.logsEmpty') }}</h3>
+              <p>{{ t('acct.logsEmptyText') }}</p>
+              <button class="pill" @click="tab = 'subs'">{{ t('acct.logsCta') }}</button>
+            </div>
+
+            <ol v-else class="timeline">
+              <li v-for="l in auth.subLogs" :key="l.id" class="tl">
+                <span class="tl-dot" :class="l.action" />
+                <div class="tl-main">
+                  <div class="tl-top">
+                    <span class="tl-act" :class="l.action">{{ t('acct.logAction.' + l.action) }}</span>
+                    <span class="tl-plan">{{ planText(l.plan) }}</span>
+                    <time>{{ dateText(l.created_at) }}</time>
+                  </div>
+                  <p class="tl-meta">
+                    <span v-if="l.started_at && l.expires_at">
+                      {{ dateText(l.started_at) }} → {{ dateText(l.expires_at) }}
+                    </span>
+                    <span v-if="l.from_plan && l.from_plan !== 'none' && l.from_plan !== l.plan">
+                      {{ t('acct.logFrom', { plan: planText(l.from_plan) }) }}
+                    </span>
+                    <em v-if="l.amount_cents">{{ money(l.amount_cents, l.currency) }}</em>
+                  </p>
+                </div>
+              </li>
+            </ol>
           </div>
         </div>
       </section>
@@ -826,6 +920,68 @@ function goCollections () { router.push('/collections') }
 .switch.on { background: var(--ink); }
 .switch.on i { transform: translateX(18px); }
 
+/* ---------- 订阅记录 ---------- */
+.log-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.stat {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff, #fbfbfc);
+}
+.stat span { display: block; font-size: 11.5px; color: var(--ink-4); margin-bottom: 5px; }
+.stat strong { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+
+.timeline { list-style: none; padding: 0; margin: 0; }
+.tl { position: relative; display: flex; gap: 14px; padding-bottom: 22px; }
+.tl::before {
+  content: '';
+  position: absolute;
+  left: 5px; top: 15px; bottom: 0;
+  width: 1px;
+  background: var(--line-soft);
+}
+.tl:last-child { padding-bottom: 0; }
+.tl:last-child::before { display: none; }
+.tl-dot {
+  flex: none;
+  width: 11px; height: 11px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--line);
+  box-shadow: 0 0 0 4px #fff;
+}
+.tl-dot.subscribe, .tl-dot.renew { background: #2faa6a; }
+.tl-dot.change { background: #b9855c; }
+.tl-dot.cancel { background: #c9c9ce; }
+.tl-main { flex: 1; min-width: 0; }
+.tl-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tl-act {
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+}
+.tl-act.subscribe, .tl-act.renew { background: rgba(47, 170, 106, .12); color: #1f7f4d; }
+.tl-act.change { background: rgba(185, 133, 92, .14); color: var(--accent-ink); }
+.tl-act.cancel { background: var(--bg-soft); color: var(--ink-4); }
+.tl-plan { font-size: 13.5px; font-weight: 600; }
+.tl-top time { margin-left: auto; font-size: 12px; color: var(--ink-4); }
+.tl-meta {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.tl-meta em { font-style: normal; color: var(--ink-1); font-weight: 600; }
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 900px) {
   .acct-body { grid-template-columns: 1fr; gap: 24px; padding-top: 28px; padding-bottom: 64px; }
@@ -852,5 +1008,10 @@ function goCollections () { router.push('/collections') }
   .more { padding: 4px 0; }
   /* 给右下角悬浮联系按钮留出空间，避免遮住开关 */
   .pref { padding-right: 54px; }
+  .log-stats { grid-template-columns: 1fr; gap: 8px; }
+  .stat { display: flex; align-items: baseline; justify-content: space-between; padding: 11px 14px; }
+  .stat span { margin-bottom: 0; }
+  .stat strong { font-size: 16px; }
+  .tl-top time { margin-left: 0; order: 4; }
 }
 </style>

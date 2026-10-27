@@ -466,5 +466,20 @@ export default {
   'acct.subsPrice': 'Изменения цен',
   'acct.subsLook': 'Идеи образов',
   'acct.subsSendTo': 'Уведомления придут на {email}',
-  'acct.subsSaved': 'Настройки сохранены'
+  'acct.subsSaved': 'Настройки сохранены',
+  'acct.tab.logs': 'История подписки',
+  'acct.logsHint': 'Каждое оформление, продление и отмена фиксируются здесь.',
+  'acct.logsCount': 'Записей',
+  'acct.logsSpent': 'Всего оплачено',
+  'acct.logsSince': 'Первая подписка',
+  'acct.logsEmpty': 'Истории подписки пока нет',
+  'acct.logsEmptyText': 'После оформления подписки изменения плана и сроки действия будут записываться здесь.',
+  'acct.logsCta': 'Перейти к подписке',
+  'acct.logsView': 'Смотреть историю',
+  'acct.logAction.subscribe': 'Оформлена',
+  'acct.logAction.renew': 'Продлена',
+  'acct.logAction.change': 'План изменён',
+  'acct.logAction.cancel': 'Отменена',
+  'acct.logFrom': 'Было: {plan}',
+  'acct.subsDaysLeft': 'Осталось {n} дн.'
 }
