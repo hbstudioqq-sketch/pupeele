@@ -2,13 +2,16 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { CATEGORIES, PRODUCTS, STATS } from '@/data/catalog'
+import { CATEGORIES, PRODUCTS, STATS, SOURCED } from '@/data/catalog'
 import ProductCard from '@/components/ProductCard.vue'
+import StoreCard from '@/components/StoreCard.vue'
 import CategoryArt from '@/components/CategoryArt.vue'
 import { useReveal } from '@/composables/useReveal'
+import { useCartStore } from '@/stores/cart'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const cart = useCartStore()
 useReveal()
 
 const featured = computed(() => PRODUCTS.slice(0, 6))
@@ -78,6 +81,21 @@ const statValue = s => s.value + (s.suffixKey ? t(s.suffixKey) : (s.suffix || ''
       </div>
       <div class="more">
         <button class="pill" @click="router.push('/collections')">{{ t('hero.cta1') }} →</button>
+      </div>
+    </section>
+
+    <!-- 现货直供 In-stock (DTC 零售轨) -->
+    <section class="section wrap store-sec">
+      <div class="center reveal">
+        <p class="eyebrow">{{ t('store.eyebrow') }}</p>
+        <h2 class="h2">{{ t('store.title') }}</h2>
+        <p class="lead">{{ t('store.sub') }}</p>
+      </div>
+      <div class="store-grid">
+        <StoreCard v-for="p in SOURCED" :key="p.id" :p="p" class="reveal" />
+      </div>
+      <div class="more">
+        <button class="pill" @click="cart.open = true">{{ t('store.viewCart') }} →</button>
       </div>
     </section>
 
@@ -188,6 +206,9 @@ const statValue = s => s.value + (s.suffixKey ? t(s.suffixKey) : (s.suffix || ''
 .grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
 }
+.store-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 38px;
+}
 .more { text-align: center; margin-top: 34px; }
 
 .pts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 40px 0 44px; }
@@ -208,9 +229,11 @@ const statValue = s => s.value + (s.suffixKey ? t(s.suffixKey) : (s.suffix || ''
   .stats { grid-template-columns: repeat(2, 1fr); }
   .cats { grid-template-columns: repeat(3, 1fr); }
   .grid { grid-template-columns: repeat(2, 1fr); }
+  .store-grid { grid-template-columns: repeat(2, 1fr); }
   .pts { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .grid { grid-template-columns: 1fr; }
+  .store-grid { grid-template-columns: 1fr; }
 }
 </style>
