@@ -37,7 +37,7 @@ async function checkout () {
 <template>
   <a-drawer
     v-model:open="cart.open"
-    :title="`${t('cart.title')}${cart.count ? ' (' + cart.count + ')' : ''}`"
+    :title="`${t('shop.title')}${cart.count ? ' (' + cart.count + ')' : ''}`"
     placement="right"
     :width="380"
   >
@@ -64,18 +64,18 @@ async function checkout () {
 
       <div class="ci-foot">
         <div class="subtotal">
-          <span>{{ t('cart.subtotal') }}</span>
+          <span>{{ t('shop.subtotal') }}</span>
           <strong>${{ cart.subtotal.toFixed(2) }}</strong>
         </div>
         <p v-if="PAYMENT_MOCK" class="mock-note">{{ t('buy.mockNote') }}</p>
         <a-button type="primary" block size="large" :loading="paying" @click="checkout">
-          {{ t('cart.checkout') }}
+          {{ t('shop.checkout') }}
         </a-button>
-        <a-button block @click="cart.clear()">{{ t('cart.clear') }}</a-button>
+        <a-button block @click="cart.clear()">{{ t('shop.clear') }}</a-button>
       </div>
     </template>
-    <a-empty v-else :description="t('cart.empty')">
-      <p style="color: var(--ink-4); font-size: 13px">{{ t('cart.emptyHint') }}</p>
+    <a-empty v-else :description="t('shop.empty')">
+      <p style="color: var(--ink-4); font-size: 13px">{{ t('shop.emptyHint') }}</p>
     </a-empty>
   </a-drawer>
 </template>

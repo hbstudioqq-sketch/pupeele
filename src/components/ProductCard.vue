@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import message from 'ant-design-vue/es/message'
 import { useEnquiryStore } from '@/stores/enquiry'
 import { CATEGORIES, PRODUCTS } from '@/data/catalog'
@@ -8,7 +9,10 @@ import CategoryArt from '@/components/CategoryArt.vue'
 
 const props = defineProps({ p: { type: Object, required: true } })
 const { t, locale } = useI18n()
+const router = useRouter()
 const enquiry = useEnquiryStore()
+
+function goDetail () { router.push('/product/' + props.p.id) }
 
 const cat = CATEGORIES.find(c => c.id === props.p.cat) || CATEGORIES[0]
 const added = () => enquiry.has(props.p.id)
@@ -30,7 +34,15 @@ function toggle () {
 </script>
 
 <template>
-  <article class="card pc">
+  <article
+    class="card pc"
+    role="link"
+    tabindex="0"
+    :aria-label="t(p.nameKey)"
+    @click="goDetail"
+    @keydown.enter="goDetail"
+    @keydown.space.prevent="goDetail"
+  >
     <div class="ph" :style="{ '--t0': p.tint[0], '--t1': p.tint[1] }">
       <div class="ph-art">
         <CategoryArt :id="cat.icon" :variant="variant" :tint="p.tint" />
@@ -47,7 +59,7 @@ function toggle () {
         <div><dt>{{ t('p.price') }}</dt><dd>{{ p.price }}</dd></div>
         <div><dt>{{ t('p.lead') }}</dt><dd>{{ t(p.leadKey) }}</dd></div>
       </dl>
-      <button class="pill add" :class="{ on: added() }" @click="toggle">
+      <button class="pill add" :class="{ on: added() }" @click.stop="toggle">
         {{ added() ? t('p.added') : t('p.add') }}
       </button>
     </div>
@@ -55,7 +67,7 @@ function toggle () {
 </template>
 
 <style scoped>
-.pc { display: flex; flex-direction: column; overflow: hidden; }
+.pc { display: flex; flex-direction: column; overflow: hidden; cursor: pointer; }
 
 /* ── 顶部插画区 ── */
 .ph {

@@ -36,6 +36,12 @@ const routes = [
     component: () => import('@/views/AccountView.vue'),
     meta: { nav: 'acct.title' }
   },
+  {
+    path: '/product/:id',
+    name: 'product',
+    component: () => import('@/views/ProductView.vue'),
+    meta: { nav: 'nav.collections' }
+  },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

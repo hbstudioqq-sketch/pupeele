@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import message from 'ant-design-vue/es/message'
 import { useCartStore } from '@/stores/cart'
 import { CATEGORIES } from '@/data/catalog'
@@ -8,7 +9,10 @@ import CategoryArt from '@/components/CategoryArt.vue'
 
 const props = defineProps({ p: { type: Object, required: true } })
 const { t, locale } = useI18n()
+const router = useRouter()
 const cart = useCartStore()
+
+function goDetail () { router.push('/product/' + props.p.id) }
 
 const cat = CATEGORIES.find(c => c.id === props.p.cat) || CATEGORIES[0]
 
@@ -48,7 +52,15 @@ function addToCart () {
 </script>
 
 <template>
-  <article class="card sc">
+  <article
+    class="card sc"
+    role="link"
+    tabindex="0"
+    :aria-label="t(p.nameKey)"
+    @click="goDetail"
+    @keydown.enter="goDetail"
+    @keydown.space.prevent="goDetail"
+  >
     <div class="ph" :style="{ '--t0': p.tint[0], '--t1': p.tint[1] }">
       <img v-if="p.image" :src="p.image" :alt="t(p.nameKey)" class="ph-img" />
       <div v-else class="ph-art">
@@ -66,7 +78,7 @@ function addToCart () {
         <button
           v-for="(s, i) in p.styles" :key="i"
           class="chip" :class="{ on: styleIdx === i }"
-          @click="styleIdx = i"
+          @click.stop="styleIdx = i"
         >{{ t(s.labelKey) }}</button>
       </div>
 
@@ -75,7 +87,7 @@ function addToCart () {
         <span class="moq">{{ t('store.moq') }} {{ p.moq }}+</span>
       </div>
 
-      <button class="pill buy" @click="addToCart">
+      <button class="pill buy" @click.stop="addToCart">
         {{ inCart ? t('store.inCart', { n: inCart }) : t('store.addCart') }}
       </button>
     </div>
@@ -83,7 +95,7 @@ function addToCart () {
 </template>
 
 <style scoped>
-.sc { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card, #fff); border-radius: 16px; }
+.sc { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card, #fff); border-radius: 16px; cursor: pointer; }
 .ph { position: relative; aspect-ratio: 16 / 11; display: grid; place-items: center; overflow: hidden;
   background: radial-gradient(115% 85% at 50% 6%, rgba(255,255,255,.82), rgba(255,255,255,0) 60%),
               linear-gradient(158deg, var(--t0), var(--t1)); }

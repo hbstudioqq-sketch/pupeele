@@ -8,6 +8,7 @@ import { useEnquiryStore } from '@/stores/enquiry'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useCartStore } from '@/stores/cart'
+import { useStandingStore } from '@/stores/standing'
 import { LANGS } from '@/locales'
 import { CONFIG, LINKS } from '@/data/config'
 import { header, copyText, downloadText, openWhatsApp, openFacebook } from '@/composables/useSend'
@@ -15,6 +16,7 @@ import { supabase } from '@/supabase'
 import SendSheet from '@/components/SendSheet.vue'
 import AccountModal from '@/components/AccountModal.vue'
 import CartDrawer from '@/components/CartDrawer.vue'
+import StandingDrawer from '@/components/StandingDrawer.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -24,6 +26,7 @@ const enquiry = useEnquiryStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 const cart = useCartStore()
+const standing = useStandingStore()
 
 const menuOpen = ref(false)
 
@@ -46,6 +49,7 @@ const navs = [
 
 const sendOpen = ref(false)
 const sendText = ref('')
+const sendFilename = ref('pupeele-enquiry.txt')
 
 /* 询价篮里的 name 现在存的是 locale key（data 层已 key 化），
    切换语言时按 key 重新取值即可，不会串味。 */
@@ -79,6 +83,7 @@ function requireSubscribe () {
 function sendCart () {
   if (!requireSubscribe()) return
   sendText.value = buildCartText()
+  sendFilename.value = 'pupeele-enquiry.txt'
   sendOpen.value = true
   saveEnquiry()
 }
@@ -108,8 +113,67 @@ async function saveEnquiry () {
   }
 }
 
+/* ── 常备单一键询价 ──────────────────────────────────────────
+   文本抬头标明「常备单询价 + 品种数 + 总件数」，每条带 × 数量。
+   落库沿用 enquiries 表既有列（lang/item_count/items/text/user_id），
+   qty 放进 JSONB items，不新增数据库列，避免 schema 迁移。 */
+function standingLabel (i) {
+  return i.nameKey ? t(i.nameKey) : (typeof i.name === 'string' ? i.name : (i.name?.[locale.value] || i.name?.en || ''))
+}
+
+function buildStandingText () {
+  let s = header(locale.value) + '\n'
+  s += `${t('st.enquireTitle')} · ${t('st.items', { n: standing.count })} · ${t('st.pcs', { n: standing.totalQty })}\n\n`
+  standing.items.forEach((i, idx) => {
+    const style = i.styleLabelKey ? ` (${t(i.styleLabelKey)})` : ''
+    s += `${idx + 1}. ${standingLabel(i)}${style} × ${i.qty}\n`
+    if (i.meta) s += `   ${i.meta}\n`
+  })
+  s += `\n${t('contact.sub')}\n`
+  return s
+}
+
+async function saveStandingEnquiry () {
+  const base = {
+    lang: locale.value,
+    item_count: standing.count,
+    items: standing.items.map(i => ({
+      id: i.id,
+      name: standingLabel(i),
+      meta: i.meta || null,
+      qty: i.qty,
+      style: i.styleLabelKey ? t(i.styleLabelKey) : null
+    })),
+    text: sendText.value
+  }
+  try {
+    let payload = base
+    if (auth.user) payload = { ...base, user_id: auth.user.id }
+    let { error } = await supabase.from('enquiries').insert(payload)
+    if (error && payload !== base) {
+      ({ error } = await supabase.from('enquiries').insert(base))
+    }
+    if (error) throw error
+    message.success(t('db.saved'))
+  } catch (e) {
+    console.error('[supabase] standing enquiry insert failed', e)
+    message.warning(t('db.failed'))
+  }
+}
+
+function onStandingEnquire () {
+  if (!standing.count) return
+  if (!requireSubscribe()) return       // 复用现有订阅门禁
+  sendText.value = buildStandingText()
+  sendFilename.value = 'pupeele-standing-enquiry.txt'
+  sendOpen.value = true
+  standing.open = false
+  saveStandingEnquiry()
+}
+
 function onEnquiry () {
   if (!requireSubscribe()) return
+  sendFilename.value = 'pupeele-enquiry.txt'
   enquiry.open = true
 }
 
@@ -192,6 +256,10 @@ const year = new Date().getFullYear()
           {{ t('nav.cart') }}
           <span v-if="cart.count" class="badge">{{ cart.count }}</span>
         </button>
+        <button class="pill ghost standing-pill" @click="standing.open = true">
+          {{ t('nav.standing') }}
+          <span v-if="standing.count" class="badge">{{ standing.count }}</span>
+        </button>
         <button class="pill ghost account-pill" @click="onAccount">
           <template v-if="auth.isLoggedIn">{{ auth.displayName }}</template>
           <template v-else>{{ t('nav.account') }}</template>
@@ -207,6 +275,12 @@ const year = new Date().getFullYear()
           active-class="active"
           @click="menuOpen = false"
         >{{ t(n.key) }}</router-link>
+        <button class="mnav-account mnav-sub" @click="menuOpen = false; standing.open = true">
+          {{ t('nav.standing') }}<span v-if="standing.count"> ({{ standing.count }})</span>
+        </button>
+        <button class="mnav-account mnav-sub" @click="menuOpen = false; cart.open = true">
+          {{ t('nav.cart') }}<span v-if="cart.count"> ({{ cart.count }})</span>
+        </button>
         <button class="mnav-account" @click="menuOpen = false; onAccount()">
           {{ auth.isLoggedIn ? auth.displayName : t('nav.account') }}
         </button>
@@ -294,11 +368,12 @@ const year = new Date().getFullYear()
       :title="t('send.title')"
       :sub="t('send.sub')"
       :text="sendText"
-      filename="pupeele-enquiry.txt"
+      :filename="sendFilename"
     />
 
     <AccountModal v-model:open="ui.accountOpen" />
     <CartDrawer />
+    <StandingDrawer @enquire="onStandingEnquire" />
   </a-config-provider>
 </template>
 
@@ -316,6 +391,7 @@ const year = new Date().getFullYear()
   margin-left: 7px; border-radius: 999px;
   background: rgba(255, 255, 255, .28); font-size: 11px;
 }
+.pill.ghost .badge { background: var(--ink); color: #fff; }
 .ci {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 12px 0; border-bottom: 1px solid var(--line-soft);
@@ -350,6 +426,10 @@ const year = new Date().getFullYear()
   border-top: 1px solid var(--line-soft); border-radius: 0;
   font-size: 13.5px; color: var(--ink-3);
   overflow: hidden; text-overflow: ellipsis;
+}
+.mnav-account.mnav-sub {
+  margin-top: 0; padding-top: 11px;
+  border-top: none; border-radius: 10px;
 }
 
 @media (max-width: 860px) {
