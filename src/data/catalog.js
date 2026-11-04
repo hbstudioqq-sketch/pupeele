@@ -110,6 +110,42 @@ export const PRODUCTS = [
     size: '10 / 15 cm', matKey: 'p.m3.mat', moq: 500, price: '$0.55 – $1.05', leadKey: 'p.m3.lead' }
 ]
 
+/* ───────────────────────────────────────────────────────────
+ * 现货直供（SOURCED）：商家已生产的白牌通用件，直接上架零售。
+ * 与上面 PRODUCTS（定制/OEM 询价）双轨并存：
+ *   - PRODUCTS  → B2B 批发询价（MOQ 高、按规格报价）
+ *   - SOURCED  → 现货零售（低起批量、明码标价、可直购）
+ * 字段：
+ *   costCNY   白牌进货成本（人民币，真实抓取/估算）
+ *   retailUSD 平台零售价（美元，你定价）
+ *   ip        'white' = 纯白牌通用件（尺寸/风格描述，零 IP 风险）
+ *   image     真实商品图路径；为空则回退参数化 SVG
+ *   styles    可选款式加价数组（{ labelKey, priceUSD, costCNY }）
+ * ─────────────────────────────────────────────────────────── */
+export const SOURCED = [
+  { id: 'sk1', cat: 'charms', tint: ['#f2ece2', '#dbcfba'],
+    nameKey: 's.sk1.name', descKey: 's.sk1.desc', matKey: 's.sk1.mat',
+    size: '约 8–12 cm', moq: 2, costCNY: 6.59, retailUSD: 9.9,
+    ip: 'white', image: '', supplier: '义乌市赋咕电子商务商行',
+    styles: [
+      { labelKey: 's.sk1.a', priceUSD: 9.9, costCNY: 6.59 },
+      { labelKey: 's.sk1.b', priceUSD: 13.9, costCNY: 12.99 },
+      { labelKey: 's.sk1.c', priceUSD: 19.9, costCNY: 18.99 }
+    ] },
+  { id: 'sk2', cat: 'charms', tint: ['#f4ebe6', '#dfc8bb'],
+    nameKey: 's.sk2.name', descKey: 's.sk2.desc', matKey: 's.sk2.mat',
+    size: '约 6–9 cm', moq: 5, costCNY: 3.20, retailUSD: 7.9,
+    ip: 'white', image: '', supplier: '义乌小商品市场' },
+  { id: 'sk3', cat: 'charms', tint: ['#f0eef4', '#d0cbe0'],
+    nameKey: 's.sk3.name', descKey: 's.sk3.desc', matKey: 's.sk3.mat',
+    size: '约 5–7 cm', moq: 3, costCNY: 4.50, retailUSD: 8.9,
+    ip: 'white', image: '', supplier: '原创白牌工坊' },
+  { id: 'sk4', cat: 'charms', tint: ['#e9ecea', '#c4cdc8'],
+    nameKey: 's.sk4.name', descKey: 's.sk4.desc', matKey: 's.sk4.mat',
+    size: '约 10–14 cm', moq: 10, costCNY: 2.10, retailUSD: 5.9,
+    ip: 'white', image: '', supplier: '织带供应链' }
+]
+
 export const STATS = [
   { value: '300', key: 'stats.moq', suffix: '' },
   { value: '2,400', key: 'stats.sku', suffix: '+' },

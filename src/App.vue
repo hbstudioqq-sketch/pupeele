@@ -7,12 +7,14 @@ import { useLangStore } from '@/stores/lang'
 import { useEnquiryStore } from '@/stores/enquiry'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { useCartStore } from '@/stores/cart'
 import { LANGS } from '@/locales'
 import { CONFIG, LINKS } from '@/data/config'
 import { header, copyText, downloadText, openWhatsApp, openFacebook } from '@/composables/useSend'
 import { supabase } from '@/supabase'
 import SendSheet from '@/components/SendSheet.vue'
 import AccountModal from '@/components/AccountModal.vue'
+import CartDrawer from '@/components/CartDrawer.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -21,6 +23,7 @@ const lang = useLangStore()
 const enquiry = useEnquiryStore()
 const auth = useAuthStore()
 const ui = useUiStore()
+const cart = useCartStore()
 
 const menuOpen = ref(false)
 
@@ -185,6 +188,10 @@ const year = new Date().getFullYear()
           {{ t('nav.enquiry') }}
           <span v-if="enquiry.count" class="badge">{{ enquiry.count }}</span>
         </button>
+        <button class="pill cart-pill" @click="cart.open = true">
+          {{ t('nav.cart') }}
+          <span v-if="cart.count" class="badge">{{ cart.count }}</span>
+        </button>
         <button class="pill ghost account-pill" @click="onAccount">
           <template v-if="auth.isLoggedIn">{{ auth.displayName }}</template>
           <template v-else>{{ t('nav.account') }}</template>
@@ -291,6 +298,7 @@ const year = new Date().getFullYear()
     />
 
     <AccountModal v-model:open="ui.accountOpen" />
+    <CartDrawer />
   </a-config-provider>
 </template>
 
