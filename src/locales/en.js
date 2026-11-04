@@ -558,7 +558,7 @@ export default {
   'st.sub': 'Your repeat list · edit quantities any time, it stays saved.',
   'st.empty': 'Your standing order is empty',
   'st.emptyHint': 'Set a quantity on a product page and add it here.',
-  'st.items': '{n} products',
+  'st.items': 'Products: {n}',
   'st.pcs': '{n} pcs total',
   'st.qty': 'Qty',
   'st.remove': 'Remove',

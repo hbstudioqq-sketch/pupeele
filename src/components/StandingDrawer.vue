@@ -15,11 +15,12 @@ const labelOf = i => i.nameKey ? t(i.nameKey) : i.name
 const styleOf = i => i.styleLabelKey ? t(i.styleLabelKey) : ''
 const catOf = i => CATEGORIES.find(c => c.id === i.cat) || CATEGORIES[0]
 
+/* InputNumber 逐字输入会连续触发 change，这里只落库不弹 toast，
+   底部「共 N 件」实时变化本身就是反馈，避免提示叠成一串。 */
 function onQty (key, v) {
   const n = Number(v)
   if (!Number.isFinite(n) || n < 1) return
   standing.setQty(key, Math.round(n))
-  message.success(t('st.updated'))
 }
 function remove (key) {
   standing.remove(key)

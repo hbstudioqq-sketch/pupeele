@@ -125,8 +125,9 @@ export const PRODUCTS = [
 export const SOURCED = [
   { id: 'sk1', cat: 'charms', tint: ['#f2ece2', '#dbcfba'],
     nameKey: 's.sk1.name', descKey: 's.sk1.desc', matKey: 's.sk1.mat',
-    size: '约 8–12 cm', moq: 2, costCNY: 6.59, retailUSD: 9.9,
-    ip: 'white', image: '', supplier: '义乌市赋咕电子商务商行',
+    size: '8–12 cm', moq: 2, costCNY: 6.59, retailUSD: 9.9,
+    /* 1688 原始商家：义乌市赋咕电子商务商行（此处用拉丁标识，7 语界面通用） */
+    ip: 'white', image: '', supplier: 'Yiwu · Fugu Trading',
     styles: [
       { labelKey: 's.sk1.a', priceUSD: 9.9, costCNY: 6.59 },
       { labelKey: 's.sk1.b', priceUSD: 13.9, costCNY: 12.99 },
@@ -134,16 +135,16 @@ export const SOURCED = [
     ] },
   { id: 'sk2', cat: 'charms', tint: ['#f4ebe6', '#dfc8bb'],
     nameKey: 's.sk2.name', descKey: 's.sk2.desc', matKey: 's.sk2.mat',
-    size: '约 6–9 cm', moq: 5, costCNY: 3.20, retailUSD: 7.9,
-    ip: 'white', image: '', supplier: '义乌小商品市场' },
+    size: '6–9 cm', moq: 5, costCNY: 3.20, retailUSD: 7.9,
+    ip: 'white', image: '', supplier: 'Yiwu market' },
   { id: 'sk3', cat: 'charms', tint: ['#f0eef4', '#d0cbe0'],
     nameKey: 's.sk3.name', descKey: 's.sk3.desc', matKey: 's.sk3.mat',
-    size: '约 5–7 cm', moq: 3, costCNY: 4.50, retailUSD: 8.9,
-    ip: 'white', image: '', supplier: '原创白牌工坊' },
+    size: '5–7 cm', moq: 3, costCNY: 4.50, retailUSD: 8.9,
+    ip: 'white', image: '', supplier: 'In-house workshop' },
   { id: 'sk4', cat: 'charms', tint: ['#e9ecea', '#c4cdc8'],
     nameKey: 's.sk4.name', descKey: 's.sk4.desc', matKey: 's.sk4.mat',
-    size: '约 10–14 cm', moq: 10, costCNY: 2.10, retailUSD: 5.9,
-    ip: 'white', image: '', supplier: '织带供应链' }
+    size: '10–14 cm', moq: 10, costCNY: 2.10, retailUSD: 5.9,
+    ip: 'white', image: '', supplier: 'Webbing mill' }
 ]
 
 export const STATS = [

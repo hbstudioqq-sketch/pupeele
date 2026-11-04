@@ -558,7 +558,7 @@ export default {
   'st.sub': 'Liste de réassort · quantités modifiables, sauvegardée.',
   'st.empty': 'Liste vide',
   'st.emptyHint': 'Définissez une quantité sur une fiche produit.',
-  'st.items': '{n} produits',
+  'st.items': 'Produits : {n}',
   'st.pcs': '{n} pcs au total',
   'st.qty': 'Qté',
   'st.remove': 'Retirer',

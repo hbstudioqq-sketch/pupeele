@@ -17,13 +17,16 @@ p.on('pageerror', e => errors.push('PAGEERROR: ' + e.message))
 await p.evaluateOnNewDocument(() => localStorage.setItem('pupee.lang', 'en'))
 
 async function setNum (sel, val) {
+  await p.waitForSelector(sel)
+  await sleep(600) // 抽屉/组件入场动画结束，否则 clickablePoint 取不到
   const el = await p.$(sel)
   if (!el) throw new Error('missing input: ' + sel)
-  await el.click({ clickCount: 3 })
-  await p.keyboard.press('Backspace')
+  await el.click()
+  await p.keyboard.press('End')
+  for (let i = 0; i < 8; i++) await p.keyboard.press('Backspace') // 清空旧值，不靠三击选中
   await p.keyboard.type(String(val))
   await p.keyboard.press('Tab')
-  await sleep(450)
+  await sleep(500)
 }
 
 await p.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 })
@@ -53,6 +56,7 @@ await p.screenshot({ path: '/tmp/pd-detail.png' })
 // 4) 打开常备单抽屉，改数量 800
 await p.click('.standing-pill')
 await p.waitForSelector('.ant-drawer-open .si')
+await sleep(700)
 const siCount = await p.$$eval('.ant-drawer-open .si', els => els.length)
 const qty0 = await p.$eval('.ant-drawer-open .si-qty input', e => e.value)
 const sum0 = await p.$eval('.ant-drawer-open .sum strong', e => e.textContent.trim())
@@ -75,9 +79,10 @@ await p.evaluate(() => {
   }))
 })
 await p.reload({ waitUntil: 'networkidle2' })
-await sleep(600)
+await sleep(800)
 await p.click('.standing-pill')
 await p.waitForSelector('.ant-drawer-open .si')
+await sleep(800)
 const qty2 = await p.$eval('.ant-drawer-open .si-qty input', e => e.value)
 console.log('6. persisted qty after reload:', qty2)
 await p.click('.ant-drawer-open .acts .ant-btn-primary')
