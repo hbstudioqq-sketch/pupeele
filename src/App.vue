@@ -432,10 +432,8 @@ const year = new Date().getFullYear()
   border-top: none; border-radius: 10px;
 }
 
-@media (max-width: 1200px) {
-  .burger { display: inline-flex; }
-}
 @media (max-width: 860px) {
+  .burger { display: inline-flex; }
   .nav-inner { gap: 14px; }
   .pill.ghost { display: none; }
 }

@@ -320,12 +320,8 @@ button, input, select, textarea { font: inherit; }
 .fab.fb { bottom: 22px; background: #1877f2; }
 
 /* ---------------- 响应式 ---------------- */
-/* 导航右侧有 4 个操作按钮，窄于 1200px 时主导航改走汉堡菜单，
-   避免链接与按钮互相挤压（此前新增常备单按钮后 Contact 被遮挡）。 */
-@media (max-width: 1200px) {
-  .nav-links { display: none; }
-}
 @media (max-width: 860px) {
+  .nav-links { display: none; }
   .footer { padding-top: 52px; }
   .f-top { flex-direction: column; gap: 32px; }
   .f-contact { min-width: 0; }
