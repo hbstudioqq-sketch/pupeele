@@ -1,181 +1,51 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import message from 'ant-design-vue/es/message'
 import { useLangStore } from '@/stores/lang'
-import { useEnquiryStore } from '@/stores/enquiry'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import { useCartStore } from '@/stores/cart'
 import { useStandingStore } from '@/stores/standing'
+import { useStandingEnquire } from '@/composables/standingEnquiry'
 import { LANGS } from '@/locales'
 import { CONFIG, LINKS } from '@/data/config'
-import { header, copyText, downloadText, openWhatsApp, openFacebook } from '@/composables/useSend'
-import { supabase } from '@/supabase'
+import { openWhatsApp, openFacebook } from '@/composables/useSend'
 import SendSheet from '@/components/SendSheet.vue'
 import AccountModal from '@/components/AccountModal.vue'
-import CartDrawer from '@/components/CartDrawer.vue'
 import StandingDrawer from '@/components/StandingDrawer.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const lang = useLangStore()
-const enquiry = useEnquiryStore()
 const auth = useAuthStore()
 const ui = useUiStore()
-const cart = useCartStore()
 const standing = useStandingStore()
+const { sendOpen, sendText, sendFilename, enquire } = useStandingEnquire()
 
 const menuOpen = ref(false)
 
 const theme = {
   token: {
-    colorPrimary: '#1d1d1f',
-    colorLink: '#1d1d1f',
+    colorPrimary: '#1c1b19',
+    colorLink: '#1c1b19',
     borderRadius: 10,
     fontSize: 14
   }
 }
 
+/* 一级导航按买手任务排序：找货 → 常备 → 定制 → 关于。
+   Studio 按拍板降级为首页模块入口；合规说明保留在页脚。 */
 const navs = [
-  { to: '/', key: 'nav.home' },
   { to: '/collections', key: 'nav.collections' },
-  { to: '/studio', key: 'nav.studio' },
+  { to: '/standing', key: 'nav.standing' },
   { to: '/request', key: 'nav.request' },
   { to: '/contact', key: 'nav.contact' }
 ]
 
-const sendOpen = ref(false)
-const sendText = ref('')
-const sendFilename = ref('pupeele-enquiry.txt')
-
-/* 询价篮里的 name 现在存的是 locale key（data 层已 key 化），
-   切换语言时按 key 重新取值即可，不会串味。 */
-const cartItems = computed(() => enquiry.items.map(i => ({
-  ...i,
-  label: i.nameKey ? t(i.nameKey) : (typeof i.name === 'string' ? i.name : (i.name[locale.value] || i.name.en || ''))
-})))
-
-function buildCartText () {
-  let s = header(locale.value) + '\n'
-  s += `${t('cart.title')} (${enquiry.count} ${t('cart.items')})\n\n`
-  cartItems.value.forEach((c, i) => {
-    s += `${i + 1}. ${c.label}\n`
-    if (c.meta) s += `   ${c.meta}\n`
-  })
-  s += `\n${t('contact.sub')}\n`
-  return s
-}
-
-/* 询价门禁：必须处于有效订阅状态。
-   订阅入口统一在「我的页面」里，这里只负责把人带过去；
-   未登录则先弹出登录框，登录成功后会直接落到订阅面板。 */
-function requireSubscribe () {
-  if (auth.canEnquire) return true
-  ui.askToSubscribe()
-  if (auth.isLoggedIn) router.push('/account')
-  else ui.openAccount('subs')
-  return false
-}
-
-function sendCart () {
-  if (!requireSubscribe()) return
-  sendText.value = buildCartText()
-  sendFilename.value = 'pupeele-enquiry.txt'
-  sendOpen.value = true
-  saveEnquiry()
-}
-
-/* 询价篮落库：与发送弹窗互不阻塞。
-   登录用户带上 user_id，方便在「我的询价单」里查看；
-   若数据库尚未执行 account.sql（缺 user_id 列），自动退回匿名写入。 */
-async function saveEnquiry () {
-  const base = {
-    lang: locale.value,
-    item_count: enquiry.count,
-    items: cartItems.value.map(i => ({ id: i.id, name: i.label, meta: i.meta || null })),
-    text: sendText.value
-  }
-  try {
-    let payload = base
-    if (auth.user) payload = { ...base, user_id: auth.user.id }
-    let { error } = await supabase.from('enquiries').insert(payload)
-    if (error && payload !== base) {
-      ({ error } = await supabase.from('enquiries').insert(base))
-    }
-    if (error) throw error
-    message.success(t('db.saved'))
-  } catch (e) {
-    console.error('[supabase] enquiries insert failed', e)
-    message.warning(t('db.failed'))
-  }
-}
-
-/* ── 常备单一键询价 ──────────────────────────────────────────
-   文本抬头标明「常备单询价 + 品种数 + 总件数」，每条带 × 数量。
-   落库沿用 enquiries 表既有列（lang/item_count/items/text/user_id），
-   qty 放进 JSONB items，不新增数据库列，避免 schema 迁移。 */
-function standingLabel (i) {
-  return i.nameKey ? t(i.nameKey) : (typeof i.name === 'string' ? i.name : (i.name?.[locale.value] || i.name?.en || ''))
-}
-
-function buildStandingText () {
-  let s = header(locale.value) + '\n'
-  s += `${t('st.enquireTitle')} · ${t('st.items', { n: standing.count })} · ${t('st.pcs', { n: standing.totalQty })}\n\n`
-  standing.items.forEach((i, idx) => {
-    const style = i.styleLabelKey ? ` (${t(i.styleLabelKey)})` : ''
-    s += `${idx + 1}. ${standingLabel(i)}${style} × ${i.qty}\n`
-    if (i.meta) s += `   ${i.meta}\n`
-  })
-  s += `\n${t('contact.sub')}\n`
-  return s
-}
-
-async function saveStandingEnquiry () {
-  const base = {
-    lang: locale.value,
-    item_count: standing.count,
-    items: standing.items.map(i => ({
-      id: i.id,
-      name: standingLabel(i),
-      meta: i.meta || null,
-      qty: i.qty,
-      style: i.styleLabelKey ? t(i.styleLabelKey) : null
-    })),
-    text: sendText.value
-  }
-  try {
-    let payload = base
-    if (auth.user) payload = { ...base, user_id: auth.user.id }
-    let { error } = await supabase.from('enquiries').insert(payload)
-    if (error && payload !== base) {
-      ({ error } = await supabase.from('enquiries').insert(base))
-    }
-    if (error) throw error
-    message.success(t('db.saved'))
-  } catch (e) {
-    console.error('[supabase] standing enquiry insert failed', e)
-    message.warning(t('db.failed'))
-  }
-}
-
-function onStandingEnquire () {
-  if (!standing.count) return
-  if (!requireSubscribe()) return       // 复用现有订阅门禁
-  sendText.value = buildStandingText()
-  sendFilename.value = 'pupeele-standing-enquiry.txt'
-  sendOpen.value = true
-  standing.open = false
-  saveStandingEnquiry()
-}
-
-function onEnquiry () {
-  if (!requireSubscribe()) return
-  sendFilename.value = 'pupeele-enquiry.txt'
-  enquiry.open = true
-}
+/* 询价与常备单一键询价的门禁、文本生成、SendSheet、落库
+   已统一收拢到 composables/standingEnquiry.js（页面与抽屉共用） */
 
 /* 已登录 → 进入我的页面；未登录 → 打开登录弹窗 */
 function onAccount () {
@@ -248,14 +118,6 @@ const year = new Date().getFullYear()
             </a-menu>
           </template>
         </a-dropdown>
-        <button class="pill" @click="onEnquiry">
-          {{ t('nav.enquiry') }}
-          <span v-if="enquiry.count" class="badge">{{ enquiry.count }}</span>
-        </button>
-        <button class="pill cart-pill" @click="cart.open = true">
-          {{ t('nav.cart') }}
-          <span v-if="cart.count" class="badge">{{ cart.count }}</span>
-        </button>
         <button class="pill ghost standing-pill" @click="standing.open = true">
           {{ t('nav.standing') }}
           <span v-if="standing.count" class="badge">{{ standing.count }}</span>
@@ -277,9 +139,6 @@ const year = new Date().getFullYear()
         >{{ t(n.key) }}</router-link>
         <button class="mnav-account mnav-sub" @click="menuOpen = false; standing.open = true">
           {{ t('nav.standing') }}<span v-if="standing.count"> ({{ standing.count }})</span>
-        </button>
-        <button class="mnav-account mnav-sub" @click="menuOpen = false; cart.open = true">
-          {{ t('nav.cart') }}<span v-if="cart.count"> ({{ cart.count }})</span>
         </button>
         <button class="mnav-account" @click="menuOpen = false; onAccount()">
           {{ auth.isLoggedIn ? auth.displayName : t('nav.account') }}
@@ -326,31 +185,6 @@ const year = new Date().getFullYear()
       </div>
     </footer>
 
-    <!-- 询价篮 -->
-    <a-drawer
-      v-model:open="enquiry.open"
-      :title="`${t('cart.title')} (${enquiry.count})`"
-      placement="right"
-      :width="380"
-    >
-      <template v-if="enquiry.count">
-        <div v-for="i in cartItems" :key="i.id" class="ci">
-          <div class="ci-main">
-            <strong>{{ i.label }}</strong>
-            <span v-if="i.meta" class="ci-meta">{{ i.meta }}</span>
-          </div>
-          <a-button type="text" size="small" @click="enquiry.remove(i.id)">×</a-button>
-        </div>
-        <div class="ci-acts">
-          <a-button type="primary" block size="large" @click="sendCart">{{ t('cart.send') }}</a-button>
-          <a-button block @click="enquiry.clear()">{{ t('cart.clear') }}</a-button>
-        </div>
-      </template>
-      <a-empty v-else :description="t('cart.empty')">
-        <p style="color: var(--ink-4); font-size: 13px">{{ t('cart.emptyHint') }}</p>
-      </a-empty>
-    </a-drawer>
-
     <!-- 悬浮按钮 -->
     <button class="fab wa" :aria-label="t('contact.wa')" @click="openWhatsApp('')">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
@@ -372,8 +206,7 @@ const year = new Date().getFullYear()
     />
 
     <AccountModal v-model:open="ui.accountOpen" />
-    <CartDrawer />
-    <StandingDrawer @enquire="onStandingEnquire" />
+    <StandingDrawer />
   </a-config-provider>
 </template>
 
@@ -392,13 +225,6 @@ const year = new Date().getFullYear()
   background: rgba(255, 255, 255, .28); font-size: 11px;
 }
 .pill.ghost .badge { background: var(--ink); color: #fff; }
-.ci {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px 0; border-bottom: 1px solid var(--line-soft);
-}
-.ci-main { flex: 1; display: grid; gap: 3px; }
-.ci-meta { font-size: 12px; color: var(--ink-4); }
-.ci-acts { margin-top: 20px; display: grid; gap: 10px; }
 .pill.ghost { background: none; border: 1px solid var(--line-soft); color: var(--ink-2); }
 .pill.ghost:hover { background: var(--bg-soft); }
 .account-pill { max-width: 148px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; line-height: 32px; }

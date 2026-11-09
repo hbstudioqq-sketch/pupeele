@@ -19,6 +19,12 @@ const routes = [
     meta: { nav: 'nav.studio' }
   },
   {
+    path: '/standing',
+    name: 'standing',
+    component: () => import('@/views/StandingView.vue'),
+    meta: { nav: 'nav.standing' }
+  },
+  {
     path: '/request',
     name: 'request',
     component: () => import('@/views/RequestView.vue'),

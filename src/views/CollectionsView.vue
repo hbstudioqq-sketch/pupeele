@@ -1,31 +1,56 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PRODUCTS, CATEGORIES } from '@/data/catalog'
+import { useRoute } from 'vue-router'
+import { PRODUCTS, SOURCED, CATEGORIES } from '@/data/catalog'
 import ProductCard from '@/components/ProductCard.vue'
 import CategoryArt from '@/components/CategoryArt.vue'
 import { useReveal } from '@/composables/useReveal'
 
+/* 统一目录：白牌现货 + 定制品并轨，规格前置，支持品类 / 关键词 /
+   MOQ / 现货快捷筛选。首页 hero 的搜索词与快捷筛选通过 query 传入。 */
 const { t } = useI18n()
+const route = useRoute()
+
+const ALL = [...SOURCED, ...PRODUCTS]
 
 const cat = ref('all')
 const kw = ref('')
+const quick = ref('all') // all | moq300 | stock
+
+/* 从首页快捷入口带过来的筛选条件 */
+function applyQuery () {
+  const q = route.query
+  if (q.kw !== undefined) kw.value = String(q.kw)
+  if (q.cat) cat.value = String(q.cat)
+  if (q.moq) quick.value = 'moq300'
+  else if (q.stock) quick.value = 'stock'
+  else if ('moq' in q || 'stock' in q) quick.value = 'all'
+}
+applyQuery()
+watch(() => route.query, applyQuery)
 
 const catName = id => {
   const c = CATEGORIES.find(x => x.id === id)
   return c ? t(c.nameKey) : ''
 }
 
-/* 关键词：命中名称 / 描述 / 材质 / 尺寸 / 品类名 任一即可 */
+/* 关键词：命中名称 / 描述 / 材质 / 尺寸 / SKU / 品类名 任一即可 */
 const hit = p => {
   const q = kw.value.trim().toLowerCase()
   if (!q) return true
-  return [t(p.nameKey), t(p.descKey), t(p.matKey), p.size, catName(p.cat)]
+  return [t(p.nameKey), t(p.descKey), t(p.matKey), p.size, p.sku, p.id, catName(p.cat)]
     .some(s => String(s).toLowerCase().includes(q))
 }
 
+const hitQuick = p => {
+  if (quick.value === 'moq300') return (p.moq || 0) <= 300
+  if (quick.value === 'stock') return p.retailUSD !== undefined
+  return true
+}
+
 /* 关键词匹配后的全集（不看当前品类），用来算每个 chip 的计数 */
-const matched = computed(() => PRODUCTS.filter(hit))
+const matched = computed(() => ALL.filter(p => hit(p) && hitQuick(p)))
 
 const counts = computed(() => {
   const m = { all: matched.value.length }
@@ -37,11 +62,12 @@ const list = computed(() =>
   cat.value === 'all' ? matched.value : matched.value.filter(p => p.cat === cat.value)
 )
 
-const filtering = computed(() => cat.value !== 'all' || kw.value.trim() !== '')
+const filtering = computed(() => cat.value !== 'all' || kw.value.trim() !== '' || quick.value !== 'all')
 
 function reset () {
   cat.value = 'all'
   kw.value = ''
+  quick.value = 'all'
 }
 
 /* 列表变化（筛选 / 搜索）后，新出现的卡片要重新接入渐显观察 */
@@ -75,6 +101,17 @@ useReveal(list)
           <span>{{ t(c.nameKey) }}</span>
           <span class="cn">{{ counts[c.id] }}</span>
         </button>
+        <span class="sep" aria-hidden="true"></span>
+        <button
+          class="chip" :class="{ on: quick === 'moq300' }"
+          :aria-pressed="quick === 'moq300'"
+          @click="quick = quick === 'moq300' ? 'all' : 'moq300'"
+        >{{ t('col.qMoq') }}</button>
+        <button
+          class="chip" :class="{ on: quick === 'stock' }"
+          :aria-pressed="quick === 'stock'"
+          @click="quick = quick === 'stock' ? 'all' : 'stock'"
+        >{{ t('col.qStock') }}</button>
       </div>
       <a-input-search
         v-model:value="kw"
@@ -85,7 +122,7 @@ useReveal(list)
     </div>
 
     <p class="count">
-      <template v-if="filtering">{{ list.length }} / {{ PRODUCTS.length }}</template>
+      <template v-if="filtering">{{ list.length }} / {{ ALL.length }}</template>
       <template v-else>{{ list.length }}</template>
       {{ t('col.count') }}
       <button v-if="filtering" class="clr" type="button" @click="reset">{{ t('col.clear') }}</button>
@@ -126,6 +163,8 @@ useReveal(list)
 .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .chip.has-icon { display: inline-flex; align-items: center; gap: 7px; padding-left: 10px; }
 .chip { padding-top: 6px; padding-bottom: 6px; }
+
+.sep { width: 1px; height: 20px; background: var(--line); margin: 0 3px; }
 
 .ci-art {
   width: 19px; height: 19px; flex: none;
@@ -184,6 +223,7 @@ useReveal(list)
   }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; }
+  .sep { flex: none; }
   .search { max-width: none; width: 100%; }
 }
 </style>

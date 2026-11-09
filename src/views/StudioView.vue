@@ -13,14 +13,14 @@ import Thumb3D from '@/components/Thumb3D.vue'
 import Swatches from '@/components/Swatches.vue'
 import SendSheet from '@/components/SendSheet.vue'
 import { header, copyText } from '@/composables/useSend'
-import { useEnquiryStore } from '@/stores/enquiry'
+import { useStandingStore } from '@/stores/standing'
 
 const Doll3D = defineAsyncComponent(() => import('@/components/Doll3D.vue'))
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const enquiry = useEnquiryStore()
+const standing = useStandingStore()
 
 const look = reactive({ ...DEFAULT_LOOK })
 const step = ref(0)
@@ -168,17 +168,24 @@ const bomRows = computed(() => bom.value.map((r, i) => ({
   extra: r.extra || '—'
 })))
 
+/* 搭配间 BOM 并入常备单：qty 以 100 起步，进常备单页可再改 */
+const SLOT_CAT = {
+  top: 'outfits', bottom: 'outfits', shoes: 'shoes',
+  wig: 'heads', head: 'heads', body: 'bodies', charm: 'charms'
+}
 function addAll () {
   bom.value.filter(r => r.sku).forEach(r => {
-    enquiry.add({
+    standing.put({
+      key: 'look-' + r.sku,
       id: 'look-' + r.sku,
       nameKey: r.nameKey,
       meta: `${t('studio.slot.' + r.slot)} · ${r.sku}`,
-      sku: r.sku
+      qty: 100,
+      cat: SLOT_CAT[r.slot] || 'outfits'
     })
   })
   message.success(t('studio.addedAll'))
-  enquiry.open = true
+  standing.open = true
 }
 
 function buildLookText () {

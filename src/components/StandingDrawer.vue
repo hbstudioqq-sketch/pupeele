@@ -3,13 +3,14 @@ import { useI18n } from 'vue-i18n'
 import message from 'ant-design-vue/es/message'
 import { useStandingStore } from '@/stores/standing'
 import { useAuthStore } from '@/stores/auth'
+import { useStandingEnquire } from '@/composables/standingEnquiry'
 import { CATEGORIES } from '@/data/catalog'
 import CategoryArt from '@/components/CategoryArt.vue'
 
-const emit = defineEmits(['enquire'])
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const standing = useStandingStore()
 const auth = useAuthStore()
+const { enquire } = useStandingEnquire()
 
 const labelOf = i => i.nameKey ? t(i.nameKey) : i.name
 const styleOf = i => i.styleLabelKey ? t(i.styleLabelKey) : ''
@@ -29,10 +30,6 @@ function remove (key) {
 function clear () {
   standing.clear()
   message.success(t('st.cleared'))
-}
-function enquire () {
-  if (!standing.count) { message.warning(t('st.enquireEmpty')); return }
-  emit('enquire')
 }
 </script>
 

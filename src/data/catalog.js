@@ -126,6 +126,7 @@ export const SOURCED = [
   { id: 'sk1', cat: 'charms', tint: ['#f2ece2', '#dbcfba'],
     nameKey: 's.sk1.name', descKey: 's.sk1.desc', matKey: 's.sk1.mat',
     size: '8–12 cm', moq: 2, costCNY: 6.59, retailUSD: 9.9,
+    sku: 'PA-CH-014', netWeight: '38 g', inner: '60 pcs', outer: '240 pcs', cert: 'EN71 / CE',
     /* 1688 原始商家：义乌市赋咕电子商务商行（此处用拉丁标识，7 语界面通用） */
     ip: 'white', image: '', supplier: 'Yiwu · Fugu Trading',
     styles: [
@@ -136,20 +137,16 @@ export const SOURCED = [
   { id: 'sk2', cat: 'charms', tint: ['#f4ebe6', '#dfc8bb'],
     nameKey: 's.sk2.name', descKey: 's.sk2.desc', matKey: 's.sk2.mat',
     size: '6–9 cm', moq: 5, costCNY: 3.20, retailUSD: 7.9,
+    sku: 'PA-CH-021', netWeight: '22 g', inner: '80 pcs', outer: '320 pcs', cert: 'EN71 / CE',
     ip: 'white', image: '', supplier: 'Yiwu market' },
   { id: 'sk3', cat: 'charms', tint: ['#f0eef4', '#d0cbe0'],
     nameKey: 's.sk3.name', descKey: 's.sk3.desc', matKey: 's.sk3.mat',
     size: '5–7 cm', moq: 3, costCNY: 4.50, retailUSD: 8.9,
+    sku: 'PA-CH-033', netWeight: '30 g', inner: '100 pcs', outer: '400 pcs', cert: 'EN71 / CE',
     ip: 'white', image: '', supplier: 'In-house workshop' },
   { id: 'sk4', cat: 'charms', tint: ['#e9ecea', '#c4cdc8'],
     nameKey: 's.sk4.name', descKey: 's.sk4.desc', matKey: 's.sk4.mat',
     size: '10–14 cm', moq: 10, costCNY: 2.10, retailUSD: 5.9,
+    sku: 'PA-CH-042', netWeight: '18 g', inner: '50 pcs', outer: '300 pcs', cert: 'EN71 / CE',
     ip: 'white', image: '', supplier: 'Webbing mill' }
-]
-
-export const STATS = [
-  { value: '300', key: 'stats.moq', suffix: '' },
-  { value: '2,400', key: 'stats.sku', suffix: '+' },
-  { value: '3', key: 'stats.lead', suffixKey: 'stat.stats.lead.suffix' },
-  { value: 'EN71', key: 'stats.cert', suffix: '' }
 ]
